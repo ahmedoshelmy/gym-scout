@@ -26,8 +26,8 @@ services:
       DATABASE_USER: ${POSTGRES_USER:-gymscout}
       DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-gymscout}
       GYMSCOUT_DEMO_DATA: ${GYMSCOUT_DEMO_DATA:-true}
-      # "Today" for visits and weekly volume follows this zone (the JVM reads TZ; tzdb ships with Java).
-      TZ: ${TZ:-Africa/Cairo}
+      # "Today" for visits and weekly volume is computed in this zone (an injected Clock, not the container TZ).
+      GYMSCOUT_ZONE: ${GYMSCOUT_ZONE:-Africa/Cairo}
       # synthetic | overpass (OpenStreetMap, live) — straight-line | osrm (public demo server, live)
       GYMSCOUT_PLACES_SOURCE: ${GYMSCOUT_PLACES_SOURCE:-synthetic}
       GYMSCOUT_ROUTING_SOURCE: ${GYMSCOUT_ROUTING_SOURCE:-straight-line}
