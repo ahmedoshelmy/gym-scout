@@ -64,6 +64,7 @@ src/main/java/dev/gymscout/
   training/     domain (RecordBook, WeeklyVolume) · application · adapter/ persistence · web · SessionLogged event
   memberships/  domain (CostPerVisit) · application · adapter/ persistence · web
 web/            React + Vite + TypeScript, Leaflet map
+infra/          Bicep: Container Apps (api + web), Postgres Flexible Server with PostGIS allow-listed
 ```
 
 ## Quickstart
@@ -88,6 +89,13 @@ cd web && npm ci && npm run dev
 
 To use live OpenStreetMap data, set `GYMSCOUT_PLACES_SOURCE=overpass` and/or `GYMSCOUT_ROUTING_SOURCE=osrm`, then
 `POST /api/places/import` with a point and radius. Be gentle: these are free community servers.
+
+Azure (optional, manual, costs money beyond the free grants; CI only compiles it):
+
+```bash
+az bicep build --file infra/main.bicep
+az deployment group create -g <resource-group> -f infra/main.bicep -p postgresAdminPassword=<secret> imageRegistry=<registry>
+```
 
 ## Tests
 
