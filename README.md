@@ -123,6 +123,26 @@ To use live OpenStreetMap data, set `GYMSCOUT_PLACES_SOURCE=overpass` and/or `GY
 - **Records replayed, not stored.** PRs are derived by replaying sets in order (`RecordBook`), so editing history
   never leaves stale records behind.
 
+- **"Today" is a dependency.** Every use case that needs a date gets an injected `java.time.Clock` built from
+  `gymscout.zone` (`GYMSCOUT_ZONE`, default `Africa/Cairo`). A session logged at 00:30 Cairo time counts for the
+  new day even when the server or CI runner is on UTC, and tests pin the clock instead of sleeping until midnight.
+
+## Interview talking points
+
+- *How do you find the nearest gyms fast?* A GiST index on a `geography` column; `ORDER BY location <-> point`
+  is a KNN index scan, `ST_DWithin` keeps the radius filter index-assisted, and a Testcontainers PostGIS test
+  proves the order and the radius on a real database.
+- *How do you call free third-party APIs without being banned?* One `PoliteCaller` per upstream with a rate
+  limiter (1 req/s), bulkhead, retry with backoff only on 429/5xx, a circuit breaker and a fallback, all tested
+  with WireMock and exported as metrics; OSRM answers are cached in Caffeine with hit/miss metrics.
+- *Microservices or monolith?* A modular monolith: Spring Modulith verifies module boundaries in a test and
+  modules talk through events persisted in an outbox, so a module could be split into its own service later
+  without changing its callers.
+- *How do you keep it explainable?* The score is a sum of three bounded factors, each with a sentence; property
+  tests (jqwik) check invariants such as "cheaper and closer never scores lower".
+- *A bug you fixed?* Visits logged just after midnight landed on yesterday because the container ran on UTC.
+  The fix was not a `TZ` variable but making the zone explicit configuration behind an injected `Clock`.
+
 ## Data and attribution
 
 Map tiles and live gym data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, available
