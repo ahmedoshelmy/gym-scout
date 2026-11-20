@@ -23,27 +23,29 @@ sorted=$(jq '[.[].distanceMeters] | . == sort' <<<"$near")
 echo "nearby: $(jq length <<<"$near") gyms ordered by distance ($(jq -c '[.[0:3][] | .distanceMeters | floor]' <<<"$near") m)"
 
 gym=$(jq -r '.[0].gym.id' <<<"$near")
-post /api/training/sessions '{"performedOn":"2026-11-02","sets":[{"exercise":"Squat","weightKg":80,"reps":5}]}' >/dev/null
-second=$(post /api/training/sessions "{\"performedOn\":\"2026-11-05\",\"gymId\":\"$gym\",\"sets\":[{\"exercise\":\"Squat\",\"weightKg\":90,\"reps\":5}]}")
+d1=$(date -d '-6 days' +%F); d2=$(date -d '-2 days' +%F)
+post /api/training/sessions "{\"performedOn\":\"$d1\",\"sets\":[{\"exercise\":\"Squat\",\"weightKg\":80,\"reps\":5}]}" >/dev/null
+second=$(post /api/training/sessions "{\"performedOn\":\"$d2\",\"gymId\":\"$gym\",\"sets\":[{\"exercise\":\"Squat\",\"weightKg\":90,\"reps\":5}]}")
 prs=$(jq '.records | length' <<<"$second")
 [ "$prs" -ge 1 ] || { echo "FAIL second session found no PR: $second"; exit 1; }
 echo "session logged with PR: $(jq -c '.records[0] | {exercise, kind, value, previous}' <<<"$second")"
 
 found=0
 for _ in $(seq 1 20); do
-  progress=$(curl -fsS "$BASE/api/training/progress?weeks=520")
+  progress=$(curl -fsS "$BASE/api/training/progress?weeks=4")
   if jq -e '.recentRecords | any(.exercise == "Squat")' <<<"$progress" >/dev/null; then found=1; break; fi
   sleep 0.5
 done
 [ "$found" = 1 ] || { echo "FAIL progress has no Squat record"; exit 1; }
 echo "progress: $(jq -c '.bests' <<<"$progress")"
 
-today=$(date +%F)
-end=$(date -d '+30 days' +%F)
-m=$(post /api/memberships "{\"gymId\":\"$gym\",\"planName\":\"Monthly\",\"priceMinor\":90000,\"currency\":\"EGP\",\"startsOn\":\"$today\",\"endsOn\":\"$end\"}")
+# Explicit dates: the API's "today" is the server's clock (UTC in the container), not this shell's.
+start=$(date -d '-10 days' +%F)
+end=$(date -d '+20 days' +%F)
+m=$(post /api/memberships "{\"gymId\":\"$gym\",\"planName\":\"Monthly\",\"priceMinor\":90000,\"currency\":\"EGP\",\"startsOn\":\"$start\",\"endsOn\":\"$end\"}")
 mid=$(jq -r .membership.id <<<"$m")
-post "/api/memberships/$mid/visits" '{}' >/dev/null
-after=$(post "/api/memberships/$mid/visits" '{}')
+post "/api/memberships/$mid/visits" "{\"on\":\"$d1\"}" >/dev/null
+after=$(post "/api/memberships/$mid/visits" "{\"on\":\"$d2\"}")
 visits=$(jq .stats.visits <<<"$after")
 [ "$visits" -ge 1 ] || { echo "FAIL membership visits = $visits"; exit 1; }
 echo "membership: $visits visits, cost per visit so far $(jq .stats.costPerVisitMinor <<<"$after") minor units"
