@@ -1,0 +1,64 @@
+name: gym-scout
+
+services:
+  postgis:
+    image: postgis/postgis:17-3.5-alpine
+    environment:
+      POSTGRES_DB: gymscout
+      POSTGRES_USER: ${POSTGRES_USER:-gymscout}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gymscout}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d gymscout"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgis:5432/gymscout
+      DATABASE_USER: ${POSTGRES_USER:-gymscout}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-gymscout}
+      GYMSCOUT_DEMO_DATA: ${GYMSCOUT_DEMO_DATA:-true}
+      # synthetic | overpass (OpenStreetMap, live) — straight-line | osrm (public demo server, live)
+      GYMSCOUT_PLACES_SOURCE: ${GYMSCOUT_PLACES_SOURCE:-synthetic}
+      GYMSCOUT_ROUTING_SOURCE: ${GYMSCOUT_ROUTING_SOURCE:-straight-line}
+    depends_on:
+      postgis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health/readiness | grep -q UP"]
+      interval: 5s
+      timeout: 3s
+      start_period: 40s
+      retries: 30
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+  web:
+    build: ./web
+    ports:
+      - "${WEB_PORT:-8091}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/healthz | grep -q ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 64m
+
+volumes:
+  pgdata:
