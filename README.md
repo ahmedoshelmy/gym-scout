@@ -11,6 +11,8 @@ actually cost you so far.
 Java 25 · Spring Boot 4.2 · Spring Modulith · PostGIS (geography, GiST, KNN) · Resilience4j · Caffeine ·
 React + Vite + Leaflet (OpenStreetMap tiles).
 
+![Gym Scout: gyms around a home pin in central Cairo, ranked by price per visit, travel time and amenities (invented demo gyms and prices)](docs/screenshot.png)
+
 ## What it does
 
 - **Scout near a point** – click the map (or use the default point in central Cairo), choose a radius, how many
