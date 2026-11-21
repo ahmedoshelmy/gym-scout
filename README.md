@@ -1,5 +1,12 @@
 # Gym Scout
 
+[![CI](https://github.com/ahmedoshelmy/gym-scout/actions/workflows/ci.yml/badge.svg)](https://github.com/ahmedoshelmy/gym-scout/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Java 25](https://img.shields.io/badge/Java-25-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/)
+[![Spring Boot 4.2](https://img.shields.io/badge/Spring_Boot-4.2-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+
+Part of the [systems portfolio](https://github.com/ahmedoshelmy/systems-portfolio).
+
 **Find gyms near you (or on the way between home and work), compare the real price per visit and the travel time,
 then log your workouts and watch your records go up.**
 
@@ -76,12 +83,27 @@ Needs Docker (or Podman) with Compose.
 ```bash
 cp .env.example .env          # optional, placeholders only
 docker compose up -d --build --wait
-open http://localhost:8091    # web; API docs at http://localhost:8091/api/docs
 ./scripts/smoke.sh            # health, scout near Cairo, a PR, progress, cost per visit -> "SMOKE PASS"
-docker compose down -v
+docker compose down -v        # when you are done
 ```
 
-Development:
+Then open http://localhost:8091 in a browser (API docs at http://localhost:8091/api/docs). The compose stack seeds
+the invented demo gyms (`GYMSCOUT_DEMO_DATA=false` to start empty).
+
+## Run in Codespaces
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ahmedoshelmy/gym-scout)
+
+The repo carries a dev container (`.devcontainer/`: JDK 25, Node 22, Docker-in-Docker), so it opens as-is in GitHub
+Codespaces or VS Code Dev Containers and pre-fetches the Maven and npm dependencies on create. Then one command:
+
+```bash
+docker compose up -d --build --wait
+```
+
+Open the **Web** port (8091) from the Ports tab (it proxies the API). The demo gyms are seeded by default.
+
+## Development
 
 ```bash
 ./mvnw spring-boot:test-run   # API on :8080 against a Testcontainers PostGIS
